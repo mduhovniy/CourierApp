@@ -1,8 +1,4 @@
 apply plugin: 'com.android.application'
-// for FireBase integration
-apply plugin: 'com.google.gms.google-services'
-// included plugin for Lambda expression
-apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 25
@@ -41,8 +37,8 @@ dependencies {
     compile 'com.android.support:design:25.0.0'
     compile 'com.android.support:support-v4:25.0.0'
 
-    compile 'com.google.android.gms:play-services:9.0.0'
-    compile 'com.google.android.gms:play-services-location:9.0.0'
+    compile 'com.google.android.gms:play-services:9.8.0'
+    compile 'com.google.android.gms:play-services-location:9.8.0'
 
     compile 'com.google.code.gson:gson:2.6.2'
 
@@ -57,3 +53,8 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
 }
+
+// for FireBase integration
+apply plugin: 'com.google.gms.google-services'
+// included plugin for Lambda expression
+apply plugin: 'me.tatarka.retrolambda'

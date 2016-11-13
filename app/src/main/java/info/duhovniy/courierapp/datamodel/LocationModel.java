@@ -2,6 +2,7 @@ package info.duhovniy.courierapp.datamodel;
 
 
 import android.Manifest;
+import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -15,7 +16,6 @@ import com.google.android.gms.location.LocationListener;
 
 import java.util.List;
 
-import info.duhovniy.courierapp.MyApplication;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -26,7 +26,7 @@ public class LocationModel implements ILocationModel {
     private static final long LOCATION_MIN_TIME_BETWEEN_UPDATES = 0L;
     private static final float LOCATION_MIN_DISTANCE_BETWEEN_UPDATES = 0f;
 
-    private static final LocationManager LOCATION_MANAGER = (LocationManager) MyApplication.CONTEXT.getSystemService(Context.LOCATION_SERVICE);
+    private static final LocationManager LOCATION_MANAGER = (LocationManager) Application.CONTEXT.getSystemService(Context.LOCATION_SERVICE);
 
     private static final Observable<Location> mLocationObservable = createLocationObservable();
 
@@ -45,7 +45,7 @@ public class LocationModel implements ILocationModel {
                     }
                 };
 
-                if (ActivityCompat.checkSelfPermission(MyApplication.CONTEXT, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MyApplication.CONTEXT, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(Application.CONTEXT, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(Application.CONTEXT, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
