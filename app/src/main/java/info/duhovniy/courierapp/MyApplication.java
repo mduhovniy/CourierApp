@@ -1,19 +1,22 @@
 package info.duhovniy.courierapp;
 
 import android.app.Application;
+import android.content.Context;
 import android.support.annotation.NonNull;
 
 import info.duhovniy.courierapp.datamodel.DataModel;
 import info.duhovniy.courierapp.datamodel.IDataModel;
-import info.duhovniy.courierapp.viewmodel.MainViewModel;
 
 
 public class MyApplication extends Application {
     @NonNull
     private final IDataModel mDataModel;
 
-    public MyApplication() {
+    public static Context CONTEXT;
+
+    public MyApplication(Context context) {
         mDataModel = new DataModel();
+        CONTEXT = context;
     }
 
     @NonNull
@@ -21,13 +24,13 @@ public class MyApplication extends Application {
         return mDataModel;
     }
 
-    @NonNull
-    public ISchedulerProvider getSchedulerProvider() {
-        return SchedulerProvider.getInstance();
-    }
-
-    @NonNull
-    public MainViewModel getViewModel() {
-        return new MainViewModel(getDataModel(), getSchedulerProvider());
-    }
+//    @NonNull
+//    public ISchedulerProvider getSchedulerProvider() {
+//        return SchedulerProvider.getInstance();
+//    }
+//
+//    @NonNull
+//    public MainViewModel getViewModel() {
+//        return new MainViewModel(getDataModel(), getSchedulerProvider());
+//    }
 }
