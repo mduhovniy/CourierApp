@@ -7,12 +7,12 @@ import info.duhovniy.courierapp.datamodel.DataModel;
 import info.duhovniy.courierapp.datamodel.IDataModel;
 
 
-public class MyApplication extends Application {
+public class CourierApplication extends Application {
 
     @NonNull
     private final IDataModel mDataModel;
 
-    public MyApplication() {
+    public CourierApplication() {
         mDataModel = new DataModel();
     }
 

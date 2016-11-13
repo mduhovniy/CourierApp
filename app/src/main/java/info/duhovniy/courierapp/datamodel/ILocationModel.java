@@ -16,6 +16,4 @@ public interface ILocationModel {
 
     @NotNull
     Observable<List<Location>> getLocations();
-
-
 }

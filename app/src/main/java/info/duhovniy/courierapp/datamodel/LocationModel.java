@@ -2,7 +2,6 @@ package info.duhovniy.courierapp.datamodel;
 
 
 import android.Manifest;
-import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -23,12 +22,18 @@ import rx.subscriptions.Subscriptions;
 
 public class LocationModel implements ILocationModel {
 
+    private static Context mContext;
+
     private static final long LOCATION_MIN_TIME_BETWEEN_UPDATES = 0L;
     private static final float LOCATION_MIN_DISTANCE_BETWEEN_UPDATES = 0f;
 
-    private static final LocationManager LOCATION_MANAGER = (LocationManager) Application.CONTEXT.getSystemService(Context.LOCATION_SERVICE);
+    private static final LocationManager LOCATION_MANAGER = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
 
     private static final Observable<Location> mLocationObservable = createLocationObservable();
+
+    public LocationModel(Context context) {
+        mContext = context;
+    }
 
     private static Observable<Location> createLocationObservable() {
         return Observable.create(new Observable.OnSubscribe<Location>() {
@@ -45,7 +50,8 @@ public class LocationModel implements ILocationModel {
                     }
                 };
 
-                if (ActivityCompat.checkSelfPermission(Application.CONTEXT, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(Application.CONTEXT, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
