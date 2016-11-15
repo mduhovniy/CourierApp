@@ -19,11 +19,12 @@ import java.util.List;
 import info.duhovniy.courierapp.data.Courier;
 import info.duhovniy.courierapp.datamodel.IDataModel;
 import rx.Observable;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainViewModel implements IViewModel {
-
-    private Courier mCourier;
 
     @NonNull
     private final CompositeSubscription mSubscription;
@@ -38,58 +39,52 @@ public class MainViewModel implements IViewModel {
         mContext = context;
         mDataModel = dataModel;
         mSubscription = new CompositeSubscription();
-        restoreMyInstance();
+    }
+
+    @Override
+    public void onResume() {
+        if (mDataModel.getMe() != null) {
+            if (mDataModel.getMe().getName().equals(""))
+                mSubscription.add(signInAnonymously(mDataModel.getMe()));
+        }
     }
 
     public Courier getMe() {
-        return mCourier;
+        return mDataModel.getMe();
     }
 
-    public void setMe(Courier courier) {
-        mCourier = courier;
-    }
-
-    private void signInAnonymously() {
-        mSubscription.add(RxFirebaseAuth.signInAnonymously(FirebaseAuth.getInstance())
+    private Subscription signInAnonymously(Courier courier) {
+        return RxFirebaseAuth.signInAnonymously(FirebaseAuth.getInstance())
                 .flatMap(x -> RxFirebaseUser.getToken(FirebaseAuth.getInstance().getCurrentUser(), false))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(token -> {
-                    setMe(new Courier(FirebaseAuth.getInstance().getCurrentUser().getUid(), "", 1, false, 2, 3, 4));
-                    FirebaseDatabase.getInstance().getReference().child(getMe().getId()).setValue(getMe());
-                    Toast.makeText(mContext, getMe().getId(), Toast.LENGTH_LONG).show();
+                    courier.setId(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    FirebaseDatabase.getInstance().getReference().child(courier.getId()).setValue(courier);
+                    Toast.makeText(mContext, courier.getId(), Toast.LENGTH_LONG).show();
+                    mDataModel.setMe(courier);
                 }, throwable -> {
                     Toast.makeText(mContext, throwable.toString(), Toast.LENGTH_SHORT).show();
-                }));
+                });
+    }
+
+    @Override
+    public void onPause() {
+        mSubscription.clear();
+        saveMyInstance();
+        mDataModel.setMe(null);
+    }
+
+    private void saveMyInstance() {
+        if (mDataModel.getMe() != null) {
+            Gson gson = new GsonBuilder().create();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+            prefs.edit().putString("Me", gson.toJson(mDataModel.getMe())).apply();
+        }
     }
 
     @NonNull
     private Observable<List<Courier>> getAllCouriers() {
         return mDataModel.getAllCouriers();
-    }
-
-    @Override
-    public void destroy() {
-        if (mSubscription.hasSubscriptions())
-            mSubscription.unsubscribe();
-        saveMyInstance();
-    }
-
-    private void saveMyInstance() {
-        if (mCourier != null) {
-            Gson gson = new GsonBuilder().create();
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-            prefs.edit().putString("Me", gson.toJson(mCourier)).apply();
-        }
-    }
-
-    private void restoreMyInstance() {
-        Gson gson = new GsonBuilder().create();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String fromPref = prefs.getString("Me", "");
-        if (fromPref.equals("")) {
-            signInAnonymously();
-        } else {
-            mCourier = gson.fromJson(fromPref, Courier.class);
-
-        }
     }
 }

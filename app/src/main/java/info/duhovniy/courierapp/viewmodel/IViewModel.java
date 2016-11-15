@@ -1,6 +1,8 @@
 package info.duhovniy.courierapp.viewmodel;
 
 
-public interface IViewModel {
-    void destroy();
+interface IViewModel {
+    void onResume();
+
+    void onPause();
 }

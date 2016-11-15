@@ -14,10 +14,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import info.duhovniy.courierapp.datamodel.IDataModel;
+import info.duhovniy.courierapp.viewmodel.MapViewModel;
 import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
+import rx.subscriptions.CompositeSubscription;
 
 
 public class MapFragment extends SupportMapFragment implements OnMapReadyCallback {
+
 
     // Permissions constants block
     private static final String[] INITIAL_PERMS = {
@@ -27,14 +31,11 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
-    private static MapFragment instance = null;
+    private final CompositeSubscription mSubscription = new CompositeSubscription();
+    private MapViewModel mViewModel;
 
-    public static MapFragment getInstance() {
-        if (instance == null) {
-            instance = new MapFragment();
-        }
-
-        return instance;
+    public void setUpMapFragment(IDataModel dataModel) {
+        mViewModel = new MapViewModel(dataModel, this);
     }
 
     @Override
@@ -53,6 +54,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             return;
         }
         useMap();
+        // TODO: here to subscribe for all events!!!
     }
 
     @Override
@@ -77,9 +79,16 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
                         .subscribe(location -> {
                             mMap.moveCamera(CameraUpdateFactory
                                     .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
+                            mMap.setMyLocationEnabled(true);
                         });
             }
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        mViewModel.onPause();
+        mSubscription.clear();
+        super.onDestroyView();
+    }
 }

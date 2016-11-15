@@ -12,4 +12,8 @@ public interface IDataModel {
 
     @NonNull
     Observable<List<Courier>> getAllCouriers();
+
+    Courier getMe();
+
+    void setMe(Courier courier);
 }

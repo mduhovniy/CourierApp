@@ -3,12 +3,8 @@
 /local.properties
 /.idea/workspace.xml
 /.idea/libraries
-.DS_Store
 /build
-/captures
-.externalNativeBuild
 app/google-services.json
-app/libs/
-app/src/androidTest/
-app/src/test/
 libs/
+app/src/release/res/values/google_maps_api.xml
+app/src/debug/res/values/google_maps_api.xml

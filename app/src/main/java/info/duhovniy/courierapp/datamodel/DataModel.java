@@ -11,8 +11,10 @@ import rx.Observable;
 public class DataModel implements IDataModel {
 
     private List<Courier> mCouriers = new ArrayList<>();
+    private Courier me;
 
-    public DataModel() {
+    public DataModel(Courier me) {
+        this.me = me;
         mockAllCouriers();
     }
 
@@ -20,6 +22,16 @@ public class DataModel implements IDataModel {
     @Override
     public Observable<List<Courier>> getAllCouriers() {
         return Observable.just(mCouriers);
+    }
+
+    @Override
+    public Courier getMe() {
+        return me;
+    }
+
+    @Override
+    public void setMe(Courier courier) {
+        me = courier;
     }
 
     private void mockAllCouriers() {

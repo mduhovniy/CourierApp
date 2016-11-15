@@ -12,6 +12,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding.widget.RxCompoundButton;
 import com.jakewharton.rxbinding.widget.RxTextView;
 
@@ -19,18 +21,18 @@ import java.util.concurrent.TimeUnit;
 
 import info.duhovniy.courierapp.CourierApplication;
 import info.duhovniy.courierapp.R;
+import info.duhovniy.courierapp.data.Courier;
 import info.duhovniy.courierapp.databinding.ActivityMainBinding;
 import info.duhovniy.courierapp.datamodel.IDataModel;
 import info.duhovniy.courierapp.viewmodel.MainViewModel;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainActivity extends AppCompatActivity {
 
-    private CompositeSubscription mSubscription;
+    private final CompositeSubscription mSubscription = new CompositeSubscription();
     private MainViewModel mViewModel;
-
-    private MapFragment mapFragment;
     private ActivityMainBinding binding;
 
     @Override
@@ -40,10 +42,20 @@ public class MainActivity extends AppCompatActivity {
 
         checkGPS();
 
-        mapFragment = MapFragment.getInstance();
+        MapFragment mapFragment = new MapFragment();
+        mapFragment.setUpMapFragment(getDataModel());
 
         if (findViewById(R.id.map) != null)
             getSupportFragmentManager().beginTransaction().replace(R.id.map, mapFragment, "MAP_FRAGMENT").commit();
+
+        String fromPref = PreferenceManager.getDefaultSharedPreferences(this).getString("Me", "");
+        if (!fromPref.equals("")) {
+            Gson gson = new GsonBuilder().create();
+            getDataModel().setMe(gson.fromJson(fromPref, Courier.class));
+            binding.editTextUsername.setText(getDataModel().getMe().getName());
+            binding.switchVisibility.setChecked(getDataModel().getMe().isOn());
+        }
+        mViewModel = new MainViewModel(getDataModel(), this);
     }
 
     private void checkGPS() {
@@ -67,29 +79,31 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mSubscription = new CompositeSubscription();
-        mViewModel = new MainViewModel(getDataModel(), this);
+        mSubscription.add(subscribeToNameChanges());
+        mSubscription.add(subscribeToOnSwitchChanges());
+        mViewModel.onResume();
+    }
 
-        mSubscription.add(RxTextView.textChanges(binding.editTextUsername)
+    private Subscription subscribeToNameChanges() {
+        return RxTextView.textChanges(binding.editTextUsername)
                 .map(String::valueOf)
                 .filter(s -> (s.length() > 0))
                 .debounce(1000, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::changeMyName)
-        );
-        if (!PreferenceManager.getDefaultSharedPreferences(this).getString("Me", "").equals("")) {
-            mSubscription.add(rx.Observable.just(mViewModel.getMe())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(c -> {
-                        binding.editTextUsername.setText(c.getName());
-                        binding.switchVisibility.setChecked(c.isOn());
-                    })
-            );
-            mSubscription.add(RxCompoundButton.checkedChanges(binding.switchVisibility)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::turnMeOn)
-            );
-        }
+                .subscribe(this::changeMyName,
+                        this::handleError);
+    }
+
+    private Subscription subscribeToOnSwitchChanges() {
+        return RxCompoundButton.checkedChanges(binding.switchVisibility)
+                .debounce(500, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::turnMeOn,
+                        this::handleError);
+    }
+
+    public void handleError(Throwable throwable) {
+        throwable.printStackTrace();
     }
 
     private void changeMyName(String name) {
@@ -104,10 +118,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        mViewModel.onPause();
+        mSubscription.clear();
         super.onPause();
-        if (mSubscription != null && mSubscription.hasSubscriptions())
-            mSubscription.unsubscribe();
-        mViewModel.destroy();
     }
 
     @NonNull
