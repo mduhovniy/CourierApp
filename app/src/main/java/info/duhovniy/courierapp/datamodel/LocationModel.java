@@ -15,6 +15,7 @@ import com.google.android.gms.location.LocationListener;
 
 import java.util.List;
 
+import info.duhovniy.courierapp.data.Position;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -90,13 +91,13 @@ public class LocationModel implements ILocationModel {
 
     @NonNull
     @Override
-    public Observable<Location> getLastLocation() {
+    public Observable<Position> getLastPosition() {
         return null;
     }
 
     @NonNull
     @Override
-    public Observable<List<Location>> getLocations() {
+    public Observable<List<Position>> getPositions() {
         return null;
     }
 }

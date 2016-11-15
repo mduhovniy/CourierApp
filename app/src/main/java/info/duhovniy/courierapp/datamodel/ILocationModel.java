@@ -1,19 +1,18 @@
 package info.duhovniy.courierapp.datamodel;
 
 
-import android.location.Location;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import info.duhovniy.courierapp.data.Position;
 import rx.Observable;
 
 public interface ILocationModel {
 
     @NotNull
-    Observable<Location> getLastLocation();
+    Observable<Position> getLastPosition();
 
     @NotNull
-    Observable<List<Location>> getLocations();
+    Observable<List<Position>> getPositions();
 }
