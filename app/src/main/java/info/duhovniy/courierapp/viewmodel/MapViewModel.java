@@ -1,14 +1,11 @@
 package info.duhovniy.courierapp.viewmodel;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 
 import info.duhovniy.courierapp.datamodel.IDataModel;
-import info.duhovniy.courierapp.view.MapFragment;
 import rx.subscriptions.CompositeSubscription;
 
-/**
- * Created by nickelAdmin on 15/11/2016.
- */
 
 public class MapViewModel implements IViewModel {
 
@@ -16,12 +13,12 @@ public class MapViewModel implements IViewModel {
     private final CompositeSubscription mSubscription;
 
     @NonNull
-    private final MapFragment mContext;
+    private final Context mContext;
 
     @NonNull
     private final IDataModel mDataModel;
 
-    public MapViewModel(@NonNull final IDataModel dataModel, @NonNull MapFragment context) {
+    public MapViewModel(@NonNull final IDataModel dataModel, @NonNull final Context context) {
         mContext = context;
         mDataModel = dataModel;
         mSubscription = new CompositeSubscription();

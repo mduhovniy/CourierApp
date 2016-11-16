@@ -2,6 +2,7 @@ package info.duhovniy.courierapp.view;
 
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,6 +15,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import info.duhovniy.courierapp.CourierApplication;
 import info.duhovniy.courierapp.datamodel.IDataModel;
 import info.duhovniy.courierapp.viewmodel.MapViewModel;
 import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
@@ -33,15 +35,13 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
 
     private final CompositeSubscription mSubscription = new CompositeSubscription();
     private MapViewModel mViewModel;
-
-    public void setUpMapFragment(IDataModel dataModel) {
-        mViewModel = new MapViewModel(dataModel, this);
-    }
+    private Context mContext;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        mContext = getActivity();
+        mViewModel = new MapViewModel(getDataModel(), mContext);
         // Create an instance of GoogleAPIClient.
         getMapAsync(this);
     }
@@ -86,9 +86,14 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     }
 
     @Override
-    public void onDestroyView() {
+    public void onDestroy() {
+        super.onDestroy();
         mViewModel.onPause();
         mSubscription.clear();
-        super.onDestroyView();
+    }
+
+    @NonNull
+    private IDataModel getDataModel() {
+        return CourierApplication.get(mContext).getDataModel();
     }
 }

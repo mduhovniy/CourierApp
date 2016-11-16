@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private final CompositeSubscription mSubscription = new CompositeSubscription();
     private MainViewModel mViewModel;
     private ActivityMainBinding binding;
+    private MapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         checkGPS();
 
-        MapFragment mapFragment = new MapFragment();
-        mapFragment.setUpMapFragment(getDataModel());
+        mapFragment = new MapFragment();
 
         if (findViewById(R.id.map) != null)
             getSupportFragmentManager().beginTransaction().replace(R.id.map, mapFragment, "MAP_FRAGMENT").commit();
@@ -121,6 +121,12 @@ public class MainActivity extends AppCompatActivity {
         mViewModel.onPause();
         mSubscription.clear();
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mapFragment = null;
+        super.onDestroy();
     }
 
     @NonNull

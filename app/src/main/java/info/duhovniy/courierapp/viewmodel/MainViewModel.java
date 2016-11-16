@@ -35,7 +35,7 @@ public class MainViewModel implements IViewModel {
     @NonNull
     private final IDataModel mDataModel;
 
-    public MainViewModel(@NonNull final IDataModel dataModel, @NonNull Context context) {
+    public MainViewModel(@NonNull final IDataModel dataModel, @NonNull final Context context) {
         mContext = context;
         mDataModel = dataModel;
         mSubscription = new CompositeSubscription();
@@ -72,7 +72,6 @@ public class MainViewModel implements IViewModel {
     public void onPause() {
         mSubscription.clear();
         saveMyInstance();
-        mDataModel.setMe(null);
     }
 
     private void saveMyInstance() {
