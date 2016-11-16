@@ -26,7 +26,7 @@
             android:id="@+id/card_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
+            android:layout_gravity="bottom"
             android:layout_margin="5dp"
             card_view:cardCornerRadius="4dp">
 

@@ -5,15 +5,10 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding.widget.RxCompoundButton;
 import com.jakewharton.rxbinding.widget.RxTextView;
 
@@ -21,9 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import info.duhovniy.courierapp.CourierApplication;
 import info.duhovniy.courierapp.R;
-import info.duhovniy.courierapp.data.Courier;
 import info.duhovniy.courierapp.databinding.ActivityMainBinding;
-import info.duhovniy.courierapp.datamodel.IDataModel;
 import info.duhovniy.courierapp.viewmodel.MainViewModel;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -40,22 +33,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        mViewModel = new MainViewModel(CourierApplication.get(this).getDataModel(), this);
 
         checkGPS();
 
         mapFragment = new MapFragment();
-
         if (findViewById(R.id.map) != null)
             getSupportFragmentManager().beginTransaction().replace(R.id.map, mapFragment, "MAP_FRAGMENT").commit();
-
-        String fromPref = PreferenceManager.getDefaultSharedPreferences(this).getString("Me", "");
-        if (!fromPref.equals("")) {
-            Gson gson = new GsonBuilder().create();
-            getDataModel().setMe(gson.fromJson(fromPref, Courier.class));
-            binding.editTextUsername.setText(getDataModel().getMe().getName());
-            binding.switchVisibility.setChecked(getDataModel().getMe().isOn());
-        }
-        mViewModel = new MainViewModel(getDataModel(), this);
     }
 
     private void checkGPS() {
@@ -82,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
         mSubscription.add(subscribeToNameChanges());
         mSubscription.add(subscribeToOnSwitchChanges());
         mViewModel.onResume();
+        binding.editTextUsername.setText(mViewModel.getMe().getName());
+        binding.switchVisibility.setChecked(mViewModel.getMe().isOn());
     }
 
     private Subscription subscribeToNameChanges() {
@@ -90,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 .filter(s -> (s.length() > 0))
                 .debounce(1000, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::changeMyName,
+                .subscribe(s -> mViewModel.changeMyName(s),
                         this::handleError);
     }
 
@@ -98,22 +84,12 @@ public class MainActivity extends AppCompatActivity {
         return RxCompoundButton.checkedChanges(binding.switchVisibility)
                 .debounce(500, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::turnMeOn,
+                .subscribe(b -> mViewModel.turnMeOn(b),
                         this::handleError);
     }
 
     public void handleError(Throwable throwable) {
         throwable.printStackTrace();
-    }
-
-    private void changeMyName(String name) {
-        mViewModel.getMe().setName(name);
-        FirebaseDatabase.getInstance().getReference().child(mViewModel.getMe().getId()).setValue(mViewModel.getMe());
-    }
-
-    private void turnMeOn(boolean isOn) {
-        mViewModel.getMe().setOn(isOn);
-        FirebaseDatabase.getInstance().getReference().child(mViewModel.getMe().getId()).setValue(mViewModel.getMe());
     }
 
     @Override
@@ -127,10 +103,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         mapFragment = null;
         super.onDestroy();
-    }
-
-    @NonNull
-    private IDataModel getDataModel() {
-        return CourierApplication.get(this).getDataModel();
     }
 }

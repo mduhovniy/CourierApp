@@ -1,6 +1,7 @@
 package info.duhovniy.courierapp.viewmodel;
 
 import android.content.Context;
+import android.location.Location;
 import android.support.annotation.NonNull;
 
 import info.duhovniy.courierapp.datamodel.IDataModel;
@@ -32,5 +33,21 @@ public class MapViewModel implements IViewModel {
     @Override
     public void onPause() {
         mSubscription.clear();
+    }
+
+    public void storeMyLocation(Location location) {
+        mDataModel.getMe().setLat(location.getLatitude());
+        mDataModel.getMe().setLng(location.getLongitude());
+        mDataModel.saveMeToFirebase();
+    }
+
+    public void storeMyState(int state) {
+        mDataModel.getMe().setState(state);
+        mDataModel.saveMeToFirebase();
+    }
+
+    // TODO: delete after location updates testing
+    public int getState() {
+        return mDataModel.getMe().getState();
     }
 }

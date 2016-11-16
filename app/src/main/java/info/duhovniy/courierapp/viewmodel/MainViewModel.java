@@ -25,6 +25,8 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainViewModel implements IViewModel {
+    // TAG for Shared Preferences
+    private static final String PREF_TAG = "CourierApp_User";
 
     @NonNull
     private final CompositeSubscription mSubscription;
@@ -39,6 +41,8 @@ public class MainViewModel implements IViewModel {
         mContext = context;
         mDataModel = dataModel;
         mSubscription = new CompositeSubscription();
+        if (mDataModel.getMe().getName().equals(""))
+            restoreMeFromPrefs();
     }
 
     @Override
@@ -71,15 +75,37 @@ public class MainViewModel implements IViewModel {
     @Override
     public void onPause() {
         mSubscription.clear();
-        saveMyInstance();
+        saveMeToPrefs();
     }
 
-    private void saveMyInstance() {
+    private void restoreMeFromPrefs() {
+        String fromPref = PreferenceManager.getDefaultSharedPreferences(mContext).getString(PREF_TAG, "");
+        if (!fromPref.equals("")) {
+            Gson gson = new GsonBuilder().create();
+            Courier courier = gson.fromJson(fromPref, Courier.class);
+            if (courier != null) {
+                if (!courier.getName().equals("") && courier.getName() != null)
+                    mDataModel.setMe(courier);
+            }
+        }
+    }
+
+    private void saveMeToPrefs() {
         if (mDataModel.getMe() != null) {
             Gson gson = new GsonBuilder().create();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-            prefs.edit().putString("Me", gson.toJson(mDataModel.getMe())).apply();
+            prefs.edit().putString(PREF_TAG, gson.toJson(mDataModel.getMe())).apply();
         }
+    }
+
+    public void changeMyName(String name) {
+        mDataModel.getMe().setName(name);
+        mDataModel.saveMeToFirebase();
+    }
+
+    public void turnMeOn(boolean isOn) {
+        mDataModel.getMe().setOn(isOn);
+        mDataModel.saveMeToFirebase();
     }
 
     @NonNull

@@ -2,13 +2,14 @@ package info.duhovniy.courierapp.view;
 
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.widget.Toast;
 
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -16,32 +17,40 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 import info.duhovniy.courierapp.CourierApplication;
-import info.duhovniy.courierapp.datamodel.IDataModel;
 import info.duhovniy.courierapp.viewmodel.MapViewModel;
 import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
+import rx.Observable;
+import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 
 
 public class MapFragment extends SupportMapFragment implements OnMapReadyCallback {
 
-
     // Permissions constants block
     private static final String[] INITIAL_PERMS = {
             Manifest.permission.ACCESS_FINE_LOCATION
     };
-    private static final int INITIAL_REQUEST = 1337;
+    private static final int INITIAL_REQUEST = 1975;
+    // Map constants
+    private static final int ZOOM_LEVEL = 16;
+    private static final long LOCATION_INTERVAL = 1000;     // ms
+    private static final float LOCATION_DISPLACEMENT = 10;      // meters
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
     private final CompositeSubscription mSubscription = new CompositeSubscription();
+    private ReactiveLocationProvider locationProvider;
     private MapViewModel mViewModel;
-    private Context mContext;
+    private final LocationRequest locationRequest = LocationRequest.create()
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+            .setInterval(LOCATION_INTERVAL * 5)
+            .setFastestInterval(LOCATION_INTERVAL)
+            .setSmallestDisplacement(LOCATION_DISPLACEMENT);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = getActivity();
-        mViewModel = new MapViewModel(getDataModel(), mContext);
+        mViewModel = new MapViewModel(CourierApplication.get(getActivity()).getDataModel(), getActivity());
         // Create an instance of GoogleAPIClient.
         getMapAsync(this);
     }
@@ -54,12 +63,14 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             return;
         }
         useMap();
-        // TODO: here to subscribe for all events!!!
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == INITIAL_REQUEST && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            switch (requestCode) {
+                case INITIAL_REQUEST:
+            }
             // Permission Granted
             Toast.makeText(getContext(), "ACCESS_FINE_LOCATION Granted", Toast.LENGTH_SHORT).show();
             useMap();
@@ -70,30 +81,57 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     }
 
     private void useMap() {
-
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            if (mMap != null) {
-                ReactiveLocationProvider locationProvider = new ReactiveLocationProvider(getContext());
-                locationProvider.getLastKnownLocation()
-                        .subscribe(location -> {
-                            mMap.moveCamera(CameraUpdateFactory
-                                    .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
-                            mMap.setMyLocationEnabled(true);
-                        });
-            }
-        }
+        mSubscription.add(subscribeToFirstLocation());
+        mSubscription.add(subscribeToUpdateLocation());
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         mViewModel.onPause();
         mSubscription.clear();
+        super.onDestroy();
     }
 
-    @NonNull
-    private IDataModel getDataModel() {
-        return CourierApplication.get(mContext).getDataModel();
+    private Subscription subscribeToFirstLocation() {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationProvider = new ReactiveLocationProvider(getContext());
+            return locationProvider.getLastKnownLocation()
+                    .subscribe(location -> {
+                        startMyTracking(location);
+                        mViewModel.storeMyLocation(location);
+                    });
+        } else
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        return Observable.just(null).subscribe();
+    }
+
+    private Subscription subscribeToUpdateLocation() {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationProvider = new ReactiveLocationProvider(getContext());
+            return locationProvider.getUpdatedLocation(locationRequest)
+                    .subscribe(location -> {
+                        mMap.moveCamera(CameraUpdateFactory
+                                .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), ZOOM_LEVEL));
+                        mViewModel.storeMyState(mViewModel.getState() + 1);
+                        mViewModel.storeMyLocation(location);
+                    });
+        } else
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        return Observable.just(null).subscribe();
+    }
+
+    private void startMyTracking(Location location) {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            if (mMap != null) {
+                mMap.moveCamera(CameraUpdateFactory
+                        .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), ZOOM_LEVEL));
+                mMap.setMyLocationEnabled(true);
+                mViewModel.storeMyLocation(location);
+            }
+        } else
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
     }
 }

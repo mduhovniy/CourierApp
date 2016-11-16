@@ -8,11 +8,11 @@ public class Courier implements Parcelable {
     private String name;
     private int color;
     private boolean isOn;
-    private long lat;
-    private long lng;
+    private double lat;
+    private double lng;
     private int state;
 
-    public Courier(String id, String name, int color, boolean isOn, long lat, long lng, int state) {
+    public Courier(String id, String name, int color, boolean isOn, double lat, double lng, int state) {
         this.id = id;
         this.name = name;
         this.color = color;
@@ -27,8 +27,8 @@ public class Courier implements Parcelable {
         name = in.readString();
         color = in.readInt();
         isOn = in.readByte() != 0;
-        lat = in.readLong();
-        lng = in.readLong();
+        lat = in.readDouble();
+        lng = in.readDouble();
         state = in.readInt();
     }
 
@@ -76,19 +76,19 @@ public class Courier implements Parcelable {
         isOn = on;
     }
 
-    public long getLat() {
+    public double getLat() {
         return lat;
     }
 
-    public void setLat(long lat) {
+    public void setLat(double lat) {
         this.lat = lat;
     }
 
-    public long getLng() {
+    public double getLng() {
         return lng;
     }
 
-    public void setLng(long lng) {
+    public void setLng(double lng) {
         this.lng = lng;
     }
 
@@ -111,8 +111,8 @@ public class Courier implements Parcelable {
         parcel.writeString(name);
         parcel.writeInt(color);
         parcel.writeByte((byte) (isOn ? 1 : 0));
-        parcel.writeLong(lat);
-        parcel.writeLong(lng);
+        parcel.writeDouble(lat);
+        parcel.writeDouble(lng);
         parcel.writeInt(state);
     }
 }

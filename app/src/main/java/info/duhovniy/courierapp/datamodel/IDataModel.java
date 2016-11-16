@@ -16,4 +16,6 @@ public interface IDataModel {
     Courier getMe();
 
     void setMe(Courier courier);
+
+    void saveMeToFirebase();
 }
