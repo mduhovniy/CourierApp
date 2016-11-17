@@ -6,5 +6,4 @@
 /build
 app/google-services.json
 libs/
-app/src/release/res/values/google_maps_api.xml
 app/src/debug/res/values/google_maps_api.xml
