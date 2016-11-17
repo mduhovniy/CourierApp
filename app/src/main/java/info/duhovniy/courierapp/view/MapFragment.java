@@ -33,8 +33,8 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     private static final int INITIAL_REQUEST = 1975;
     // Map constants
     private static final int ZOOM_LEVEL = 16;
-    private static final long LOCATION_INTERVAL = 1000;     // ms
-    private static final float LOCATION_DISPLACEMENT = 10;      // meters
+    private static final long LOCATION_INTERVAL = 1000;         // ms
+    private static final float LOCATION_DISPLACEMENT = 100;     // meters
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
@@ -50,7 +50,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mViewModel = new MapViewModel(CourierApplication.get(getActivity()).getDataModel(), getActivity());
+        mViewModel = new MapViewModel(CourierApplication.get(getActivity()).getDataModel());
         // Create an instance of GoogleAPIClient.
         getMapAsync(this);
     }
@@ -83,6 +83,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     private void useMap() {
         mSubscription.add(subscribeToFirstLocation());
         mSubscription.add(subscribeToUpdateLocation());
+        mSubscription.add(subscribeToUpdateAction());
     }
 
     @Override
@@ -100,7 +101,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
                     .subscribe(location -> {
                         startMyTracking(location);
                         mViewModel.storeMyLocation(location);
-                    });
+                    }, this::handleError);
         } else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
@@ -112,11 +113,22 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             locationProvider = new ReactiveLocationProvider(getContext());
             return locationProvider.getUpdatedLocation(locationRequest)
                     .subscribe(location -> {
-                        mMap.moveCamera(CameraUpdateFactory
-                                .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), ZOOM_LEVEL));
-                        mViewModel.storeMyState(mViewModel.getState() + 1);
                         mViewModel.storeMyLocation(location);
-                    });
+                        mViewModel.storeMyColor(mViewModel.getMe().getColor() + 1);
+                    }, this::handleError);
+        } else
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        return Observable.just(null).subscribe();
+    }
+
+    private Subscription subscribeToUpdateAction() {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationProvider = new ReactiveLocationProvider(getContext());
+            return locationProvider.getDetectedActivity((int) LOCATION_INTERVAL)
+                    .map(a -> a.getMostProbableActivity().getType())
+                    .subscribe(state -> mViewModel.storeMyState(state),
+                            this::handleError);
         } else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
@@ -133,5 +145,9 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             }
         } else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+    }
+
+    public void handleError(Throwable throwable) {
+        throwable.printStackTrace();
     }
 }

@@ -5,14 +5,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import info.duhovniy.courierapp.data.Position;
+import info.duhovniy.courierapp.data.MarkerColor;
 import rx.Observable;
 
 public interface ILocationModel {
 
     @NotNull
-    Observable<Position> getLastPosition();
+    Observable<MarkerColor> getLastPosition();
 
     @NotNull
-    Observable<List<Position>> getPositions();
+    Observable<List<MarkerColor>> getPositions();
 }

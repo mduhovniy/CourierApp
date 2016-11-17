@@ -20,6 +20,7 @@ import info.duhovniy.courierapp.databinding.ActivityMainBinding;
 import info.duhovniy.courierapp.viewmodel.MainViewModel;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        mViewModel = new MainViewModel(CourierApplication.get(this).getDataModel(), this);
+        mViewModel = new MainViewModel(CourierApplication.get(this).getDataModel());
 
         checkGPS();
 
@@ -65,9 +66,18 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         mSubscription.add(subscribeToNameChanges());
         mSubscription.add(subscribeToOnSwitchChanges());
+        mSubscription.add(subscribeToMe());
         mViewModel.onResume();
-        binding.editTextUsername.setText(mViewModel.getMe().getName());
-        binding.switchVisibility.setChecked(mViewModel.getMe().isOn());
+    }
+
+    private Subscription subscribeToMe() {
+        return mViewModel.getObservableMe()
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(c -> {
+                    binding.editTextUsername.setText(c.getName());
+                    binding.switchVisibility.setChecked(c.isOn());
+                });
     }
 
     private Subscription subscribeToNameChanges() {

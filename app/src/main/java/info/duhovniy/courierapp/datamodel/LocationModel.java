@@ -15,7 +15,7 @@ import com.google.android.gms.location.LocationListener;
 
 import java.util.List;
 
-import info.duhovniy.courierapp.data.Position;
+import info.duhovniy.courierapp.data.MarkerColor;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -91,13 +91,13 @@ public class LocationModel implements ILocationModel {
 
     @NonNull
     @Override
-    public Observable<Position> getLastPosition() {
+    public Observable<MarkerColor> getLastPosition() {
         return null;
     }
 
     @NonNull
     @Override
-    public Observable<List<Position>> getPositions() {
+    public Observable<List<MarkerColor>> getPositions() {
         return null;
     }
 }
