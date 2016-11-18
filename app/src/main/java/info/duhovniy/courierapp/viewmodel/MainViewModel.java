@@ -15,8 +15,6 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainViewModel implements IViewModel {
-    // TAG for Shared Preferences
-    private static final String PREF_TAG = "CourierApp_User";
 
     @NonNull
     private final CompositeSubscription mSubscription = new CompositeSubscription();
@@ -34,27 +32,28 @@ public class MainViewModel implements IViewModel {
     public void onResume() {
         if (mDataModel.getMe() != null) {
             if (mDataModel.isMyNameEmpty())
-                mSubscription.add(signInAnonymously(mDataModel.getMe()));
+                mSubscription.add(signInAnonymously());
         }
-    }
-
-    private Subscription signInAnonymously(Courier courier) {
-        return RxFirebaseAuth.signInAnonymously(FirebaseAuth.getInstance())
-                .flatMap(x -> RxFirebaseUser.getToken(FirebaseAuth.getInstance().getCurrentUser(), false))
-                .map(token -> FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(id -> {
-                    courier.setId(id);
-                    mDataModel.setMe(courier);
-                    mDataModel.saveMeToCloud();
-                }, this::handleError);
     }
 
     @Override
     public void onPause() {
         mSubscription.clear();
         mDataModel.saveMeLocally();
+    }
+
+    // TODO: move down to IDataModel -> DataModel
+    private Subscription signInAnonymously() {
+        return RxFirebaseAuth.signInAnonymously(FirebaseAuth.getInstance())
+                .flatMap(x -> RxFirebaseUser.getToken(FirebaseAuth.getInstance().getCurrentUser(), false))
+                .map(token -> FirebaseAuth.getInstance().getCurrentUser().getUid())
+                // TODO: test subscription on different thread
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(id -> {
+                    mDataModel.getMe().setId(id);
+                    mDataModel.saveMeToCloud();
+                }, this::handleError);
     }
 
     public void changeMyName(String name) {
@@ -67,11 +66,11 @@ public class MainViewModel implements IViewModel {
         mDataModel.saveMeToCloud();
     }
 
-    private void handleError(Throwable throwable) {
-        throwable.printStackTrace();
-    }
-
     public Observable<Courier> getObservableMe() {
         return mDataModel.getObservableMe();
+    }
+
+    private void handleError(Throwable throwable) {
+        throwable.printStackTrace();
     }
 }

@@ -1,9 +1,11 @@
 package info.duhovniy.courierapp.data;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.database.IgnoreExtraProperties;
+import com.google.maps.android.clustering.ClusterItem;
 
-public class Courier implements Parcelable {
+@IgnoreExtraProperties
+public class Courier implements ClusterItem {
     private String id;
     private String name;
     private int color;
@@ -11,6 +13,9 @@ public class Courier implements Parcelable {
     private double lat;
     private double lng;
     private int state;
+
+    public Courier() {
+    }
 
     public Courier(String id, String name, int color, boolean isOn, double lat, double lng, int state) {
         this.id = id;
@@ -21,28 +26,6 @@ public class Courier implements Parcelable {
         this.lng = lng;
         this.state = state;
     }
-
-    protected Courier(Parcel in) {
-        id = in.readString();
-        name = in.readString();
-        color = in.readInt();
-        isOn = in.readByte() != 0;
-        lat = in.readDouble();
-        lng = in.readDouble();
-        state = in.readInt();
-    }
-
-    public static final Creator<Courier> CREATOR = new Creator<Courier>() {
-        @Override
-        public Courier createFromParcel(Parcel in) {
-            return new Courier(in);
-        }
-
-        @Override
-        public Courier[] newArray(int size) {
-            return new Courier[size];
-        }
-    };
 
     public String getId() {
         return id;
@@ -101,18 +84,7 @@ public class Courier implements Parcelable {
     }
 
     @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeString(id);
-        parcel.writeString(name);
-        parcel.writeInt(color);
-        parcel.writeByte((byte) (isOn ? 1 : 0));
-        parcel.writeDouble(lat);
-        parcel.writeDouble(lng);
-        parcel.writeInt(state);
+    public LatLng getPosition() {
+        return new LatLng(lat, lng);
     }
 }

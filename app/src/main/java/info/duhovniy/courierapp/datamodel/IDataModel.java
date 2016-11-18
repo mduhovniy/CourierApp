@@ -20,11 +20,11 @@ public interface IDataModel {
 
     boolean isMyNameEmpty();
 
-    void setMe(Courier courier);
-
     List<Courier> getCouriers();
 
     void setCouriers(List<Courier> couriers);
+
+    void addCourier(Courier courier);
 
     void saveMeToCloud();
 

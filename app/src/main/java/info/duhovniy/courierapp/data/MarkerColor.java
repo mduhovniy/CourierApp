@@ -16,24 +16,16 @@ import static android.graphics.Color.YELLOW;
 
 public class MarkerColor {
 
-    private static ColorQueue q = new ColorQueue();
+    private Queue<Integer> colors;
 
-    public static int getColor() {
-        return q.getColor();
+    public MarkerColor() {
+        colors.addAll(Arrays.asList(BLACK, BLUE, CYAN, DKGRAY, GRAY, GREEN, MAGENTA, RED, YELLOW));
     }
 
-    private static class ColorQueue {
-
-        private Queue<Integer> colors;
-
-        ColorQueue() {
-            colors.addAll(Arrays.asList(BLACK, BLUE, CYAN, DKGRAY, GRAY, GREEN, MAGENTA, RED, YELLOW));
-        }
-
-        public int getColor() {
-            int color = colors.remove();
-            colors.add(color);
-            return color;
-        }
+    public int getColor() {
+        int color = colors.remove();
+        colors.add(color);
+        return color;
     }
 }
+

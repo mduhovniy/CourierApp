@@ -20,16 +20,16 @@ public class DataModel implements IDataModel {
     // TAG for Shared Preferences
     private static final String PREF_TAG = "CourierApp_User";
 
-    private List<Courier> mCouriers = new ArrayList<>();
+    private List<Courier> mCouriers;
     private Courier me;
     private Context mContext;
 
     public DataModel(Context context) {
-        this.me = new Courier("", "", 0, false, 0, 0, 0);
+        mCouriers = new ArrayList<>();
+        me = new Courier("", "", 0, false, 0, 0, 0);
         mContext = context;
         if (isMyNameEmpty())
-            restoreMeFromPrefs();
-        mockAllCouriers();
+            restoreMeLocally();
     }
 
     @NonNull
@@ -60,8 +60,7 @@ public class DataModel implements IDataModel {
         return me.getName() == null || me.getName().isEmpty();
     }
 
-    @Override
-    public void setMe(Courier courier) {
+    private void setMe(Courier courier) {
         me = courier;
     }
 
@@ -71,8 +70,13 @@ public class DataModel implements IDataModel {
     }
 
     @Override
-    public void setCouriers(List<Courier> couriers) {
-        mCouriers = couriers;
+    public void setCouriers(List<Courier> courierList) {
+        mCouriers = courierList;
+    }
+
+    @Override
+    public void addCourier(Courier courier) {
+        mCouriers.add(courier);
     }
 
     @Override
@@ -93,13 +97,6 @@ public class DataModel implements IDataModel {
     private void saveMeToFirebase() {
         if (!me.getId().isEmpty())
             FirebaseDatabase.getInstance().getReference().child(me.getId()).setValue(me);
-    }
-
-    private void mockAllCouriers() {
-        for(int i = 0; i < 10; i++) {
-            Courier courier = new Courier("qwjjkdsh;dsagh;lg", "Sarah " + i, i, true, 32 + i, 34 + i, i);
-            mCouriers.add(courier);
-        }
     }
 
     private void restoreMeFromPrefs() {

@@ -70,14 +70,21 @@ public class MainActivity extends AppCompatActivity {
         mViewModel.onResume();
     }
 
+    @Override
+    protected void onPause() {
+        mViewModel.onPause();
+        mSubscription.clear();
+        super.onPause();
+    }
+
     private Subscription subscribeToMe() {
         return mViewModel.getObservableMe()
-                .subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(c -> {
                     binding.editTextUsername.setText(c.getName());
                     binding.switchVisibility.setChecked(c.isOn());
-                });
+                }, this::handleError);
     }
 
     private Subscription subscribeToNameChanges() {
@@ -98,20 +105,13 @@ public class MainActivity extends AppCompatActivity {
                         this::handleError);
     }
 
-    public void handleError(Throwable throwable) {
-        throwable.printStackTrace();
-    }
-
-    @Override
-    protected void onPause() {
-        mViewModel.onPause();
-        mSubscription.clear();
-        super.onPause();
-    }
-
     @Override
     protected void onDestroy() {
         mapFragment = null;
         super.onDestroy();
+    }
+
+    public void handleError(Throwable throwable) {
+        throwable.printStackTrace();
     }
 }

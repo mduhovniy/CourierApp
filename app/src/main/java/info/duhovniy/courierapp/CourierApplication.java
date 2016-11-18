@@ -13,7 +13,6 @@ import info.duhovniy.courierapp.datamodel.IDataModel;
 
 public class CourierApplication extends Application {
 
-    @NonNull
     private static IDataModel mDataModel;
 
     @Override
