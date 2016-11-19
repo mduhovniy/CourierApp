@@ -70,7 +70,8 @@ public class MainViewModel implements IViewModel {
         return mDataModel.getObservableMe();
     }
 
-    private void handleError(Throwable throwable) {
+    @Override
+    public void handleError(Throwable throwable) {
         throwable.printStackTrace();
     }
 }

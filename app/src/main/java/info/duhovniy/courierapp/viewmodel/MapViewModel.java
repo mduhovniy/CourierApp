@@ -3,11 +3,7 @@ package info.duhovniy.courierapp.viewmodel;
 import android.location.Location;
 import android.support.annotation.NonNull;
 
-import java.util.List;
-
-import info.duhovniy.courierapp.data.Courier;
 import info.duhovniy.courierapp.datamodel.IDataModel;
-import rx.Observable;
 import rx.subscriptions.CompositeSubscription;
 
 
@@ -25,18 +21,13 @@ public class MapViewModel implements IViewModel {
 
     @Override
     public void onResume() {
-//        mSubscription.add(fetchFromFirebase());
+        // TODO: mSubscription.add();
     }
 
     @Override
     public void onPause() {
         mSubscription.clear();
     }
-
-    // TODO: move down to IDataModel -> DataModel
-//    private Subscription fetchFromFirebase() {
-//        return
-//    }
 
     public void storeMyLocation(Location location) {
         mDataModel.getMe().setLat(location.getLatitude());
@@ -49,21 +40,8 @@ public class MapViewModel implements IViewModel {
         mDataModel.saveMeToCloud();
     }
 
-    public void storeMyColor(int color) {
-        mDataModel.getMe().setColor(color);
-        mDataModel.saveMeToCloud();
-    }
-
-    // TODO: remove this - for test purposes only!
-    public Courier getMe() {
-        return mDataModel.getMe();
-    }
-
-    public Observable<List<Courier>> getObservableCouriers() {
-        return mDataModel.getObservableCouriers();
-    }
-
-    private void handleError(Throwable throwable) {
+    @Override
+    public void handleError(Throwable throwable) {
         throwable.printStackTrace();
     }
 }

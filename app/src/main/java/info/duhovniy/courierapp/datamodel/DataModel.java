@@ -9,8 +9,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
 import info.duhovniy.courierapp.data.Courier;
 import rx.Observable;
@@ -20,13 +19,14 @@ public class DataModel implements IDataModel {
     // TAG for Shared Preferences
     private static final String PREF_TAG = "CourierApp_User";
 
-    private List<Courier> mCouriers;
     private Courier me;
     private Context mContext;
 
     public DataModel(Context context) {
-        mCouriers = new ArrayList<>();
-        me = new Courier("", "", 0, false, 0, 0, 0);
+        Random rand = new Random();
+        // random color for Marker HUE model
+        float color = (float) rand.nextInt(360);
+        me = new Courier("", "", color, false, 0, 0, 4);
         mContext = context;
         if (isMyNameEmpty())
             restoreMeLocally();
@@ -34,20 +34,8 @@ public class DataModel implements IDataModel {
 
     @NonNull
     @Override
-    public Observable<List<Courier>> getObservableCouriers() {
-        return Observable.create(o -> {
-            o.onNext(mCouriers);
-            o.onCompleted();
-        });
-    }
-
-    @NonNull
-    @Override
     public Observable<Courier> getObservableMe() {
-        return Observable.create(o -> {
-            o.onNext(me);
-            o.onCompleted();
-        });
+        return Observable.just(me);
     }
 
     @Override
@@ -65,23 +53,9 @@ public class DataModel implements IDataModel {
     }
 
     @Override
-    public List<Courier> getCouriers() {
-        return mCouriers;
-    }
-
-    @Override
-    public void setCouriers(List<Courier> courierList) {
-        mCouriers = courierList;
-    }
-
-    @Override
-    public void addCourier(Courier courier) {
-        mCouriers.add(courier);
-    }
-
-    @Override
     public void saveMeToCloud() {
-        saveMeToFirebase();
+        if (!me.getId().isEmpty() && !isMyNameEmpty())
+            saveMeToFirebase();
     }
 
     @Override
@@ -95,8 +69,7 @@ public class DataModel implements IDataModel {
     }
 
     private void saveMeToFirebase() {
-        if (!me.getId().isEmpty())
-            FirebaseDatabase.getInstance().getReference().child(me.getId()).setValue(me);
+        FirebaseDatabase.getInstance().getReference().child(me.getId()).setValue(me);
     }
 
     private void restoreMeFromPrefs() {

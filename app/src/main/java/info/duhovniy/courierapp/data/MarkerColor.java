@@ -1,29 +1,31 @@
 package info.duhovniy.courierapp.data;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Queue;
 
-import static android.graphics.Color.BLACK;
-import static android.graphics.Color.BLUE;
-import static android.graphics.Color.CYAN;
-import static android.graphics.Color.DKGRAY;
-import static android.graphics.Color.GRAY;
-import static android.graphics.Color.GREEN;
-import static android.graphics.Color.MAGENTA;
-import static android.graphics.Color.RED;
-import static android.graphics.Color.YELLOW;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_AZURE;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_BLUE;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_CYAN;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_GREEN;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_MAGENTA;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_ORANGE;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_RED;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_ROSE;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_VIOLET;
+import static com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_YELLOW;
 
 
 public class MarkerColor {
 
-    private Queue<Integer> colors;
+    private Queue<Float> colors = new LinkedList<>();
 
     public MarkerColor() {
-        colors.addAll(Arrays.asList(BLACK, BLUE, CYAN, DKGRAY, GRAY, GREEN, MAGENTA, RED, YELLOW));
+        colors.addAll(Arrays.asList(HUE_AZURE, HUE_BLUE, HUE_CYAN, HUE_GREEN, HUE_MAGENTA, HUE_ORANGE, HUE_RED, HUE_ROSE, HUE_VIOLET, HUE_YELLOW));
     }
 
-    public int getColor() {
-        int color = colors.remove();
+    public float getColor() {
+        float color = colors.remove();
         colors.add(color);
         return color;
     }

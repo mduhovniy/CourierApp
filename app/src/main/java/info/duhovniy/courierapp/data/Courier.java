@@ -1,6 +1,7 @@
 package info.duhovniy.courierapp.data;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.maps.android.clustering.ClusterItem;
 
@@ -8,23 +9,24 @@ import com.google.maps.android.clustering.ClusterItem;
 public class Courier implements ClusterItem {
     private String id;
     private String name;
-    private int color;
+    private float color;
     private boolean isOn;
+    private int state;
     private double lat;
     private double lng;
-    private int state;
 
+    // need for FireBase implementation
     public Courier() {
     }
 
-    public Courier(String id, String name, int color, boolean isOn, double lat, double lng, int state) {
+    public Courier(String id, String name, float color, boolean isOn, int state, double lat, double lng) {
         this.id = id;
         this.name = name;
         this.color = color;
         this.isOn = isOn;
+        this.state = state;
         this.lat = lat;
         this.lng = lng;
-        this.state = state;
     }
 
     public String getId() {
@@ -43,11 +45,11 @@ public class Courier implements ClusterItem {
         this.name = name;
     }
 
-    public int getColor() {
+    public float getColor() {
         return color;
     }
 
-    public void setColor(int color) {
+    public void setColor(float color) {
         this.color = color;
     }
 
@@ -57,6 +59,14 @@ public class Courier implements ClusterItem {
 
     public void setOn(boolean on) {
         isOn = on;
+    }
+
+    public int getState() {
+        return state;
+    }
+
+    public void setState(int state) {
+        this.state = state;
     }
 
     public double getLat() {
@@ -75,14 +85,7 @@ public class Courier implements ClusterItem {
         this.lng = lng;
     }
 
-    public int getState() {
-        return state;
-    }
-
-    public void setState(int state) {
-        this.state = state;
-    }
-
+    @Exclude
     @Override
     public LatLng getPosition() {
         return new LatLng(lat, lng);

@@ -4,9 +4,6 @@ package info.duhovniy.courierapp.view;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -28,16 +25,17 @@ import com.kelvinapps.rxfirebase.DataSnapshotMapper;
 import com.kelvinapps.rxfirebase.RxFirebaseDatabase;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import info.duhovniy.courierapp.CourierApplication;
-import info.duhovniy.courierapp.R;
 import info.duhovniy.courierapp.data.Courier;
-import info.duhovniy.courierapp.data.MarkerColor;
+import info.duhovniy.courierapp.data.Utils;
 import info.duhovniy.courierapp.viewmodel.MapViewModel;
 import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 
@@ -49,18 +47,19 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     };
     private static final int INITIAL_REQUEST = 1975;
     // Map & Location constants
-    private static final int ZOOM_LEVEL = 16;
+    private static final int ZOOM_LEVEL = 14;
     private static final long LOCATION_INTERVAL = 1000;         // ms
-    private static final float LOCATION_DISPLACEMENT = 100;     // meters
+    private static final float LOCATION_DISPLACEMENT = 10;      // meters
+    private static final long CLUSTER_RENDERING_INTERVAL = 1000;// ms
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-    private ClusterManager<Courier> mClusterManager = null;
     private final LocationRequest locationRequest = LocationRequest.create()
             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
             .setInterval(LOCATION_INTERVAL * 5)
             .setFastestInterval(LOCATION_INTERVAL)
             .setSmallestDisplacement(LOCATION_DISPLACEMENT);
-    private ReactiveLocationProvider locationProvider;
+    private ReactiveLocationProvider mLocationProvider;
+    private ClusterManager<Courier> mClusterManager;
 
     private final CompositeSubscription mSubscription = new CompositeSubscription();
     private MapViewModel mViewModel;
@@ -99,6 +98,11 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     }
 
     private void useMap() {
+        mClusterManager = new ClusterManager<>(getContext(), mMap);
+        mClusterManager.setRenderer(new OwnRendering(getContext(), mMap, mClusterManager));
+        mMap.setOnCameraIdleListener(mClusterManager);
+        mMap.setOnMarkerClickListener(mClusterManager);
+        mLocationProvider = new ReactiveLocationProvider(getContext());
         mSubscription.add(subscribeToFirstLocation());
         mSubscription.add(subscribeToUpdateLocation());
         mSubscription.add(subscribeToUpdateAction());
@@ -115,8 +119,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     private Subscription subscribeToFirstLocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            locationProvider = new ReactiveLocationProvider(getContext());
-            return locationProvider.getLastKnownLocation()
+            return mLocationProvider.getLastKnownLocation()
                     .subscribe(location -> {
                         startMyTracking(location);
                         mViewModel.storeMyLocation(location);
@@ -128,46 +131,44 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
 
     private Subscription subscribeToUpdateLocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            locationProvider = new ReactiveLocationProvider(getContext());
-            return locationProvider.getUpdatedLocation(locationRequest)
-                    .subscribe(location -> {
-                        mViewModel.storeMyLocation(location);
-                        // TODO: remove this - for test purposes only!
-                        mViewModel.storeMyColor(mViewModel.getMe().getColor() + 1);
-                    }, this::handleError);
-        } else
+                == PackageManager.PERMISSION_GRANTED)
+            return mLocationProvider.getUpdatedLocation(locationRequest)
+                    .subscribe(location -> mViewModel.storeMyLocation(location),
+                            this::handleError);
+        else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
     }
 
     private Subscription subscribeToUpdateAction() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            locationProvider = new ReactiveLocationProvider(getContext());
-            return locationProvider.getDetectedActivity((int) LOCATION_INTERVAL)
+                == PackageManager.PERMISSION_GRANTED)
+            return mLocationProvider.getDetectedActivity((int) LOCATION_INTERVAL)
                     .map(a -> a.getMostProbableActivity().getType())
                     .subscribe(state -> mViewModel.storeMyState(state),
                             this::handleError);
-        } else
+        else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
     }
 
     private Subscription subscribeToCouriers() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
+                == PackageManager.PERMISSION_GRANTED)
             return RxFirebaseDatabase.observeValueEvent(FirebaseDatabase.getInstance().getReference(),
                     DataSnapshotMapper.listOf(Courier.class))
+                    .debounce(CLUSTER_RENDERING_INTERVAL, TimeUnit.MILLISECONDS)
+                    .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(this::setUpCluster,
                             this::handleError);
-        } else
+        else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
     }
 
     private void startMyTracking(Location location) {
+
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             if (mMap != null) {
@@ -181,32 +182,23 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     }
 
     private void setUpCluster(List<Courier> list) {
+
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            if (mMap != null) {
-                if (mClusterManager != null)
-                    mClusterManager.clearItems();
-
-                mClusterManager = new ClusterManager<>(getActivity(), mMap);
-                //mMap.setOnCameraChangeListener((GoogleMap.OnCameraChangeListener) mClusterManager);
-                mMap.setOnMarkerClickListener(mClusterManager);
-
-                mClusterManager.setRenderer(new OwnRendering(getActivity(), mMap, mClusterManager));
-
+            if (mMap != null && mClusterManager != null) {
+                mClusterManager.clearItems();
                 for (Courier courier : list) {
-                    assert mMap != null;
-                    mClusterManager.addItem(courier);
+                    if (courier.isOn())
+                        mClusterManager.addItem(courier);
                 }
             }
         } else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
-
     }
 
     private class OwnRendering extends DefaultClusterRenderer<Courier> {
 
-        Bitmap markerBitmap = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.map_marker);
-        MarkerColor markerColor = new MarkerColor();
+//       Bitmap markerBitmap = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.map_marker);
 
         OwnRendering(Context context, GoogleMap map,
                      ClusterManager<Courier> clusterManager) {
@@ -216,14 +208,14 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         @Override
         protected void onBeforeClusterItemRendered(Courier item, MarkerOptions markerOptions) {
 
-            markerOptions.title(item.getName())
-                    .snippet(Integer.toString(item.getState()))
-                    .icon(BitmapDescriptorFactory.fromBitmap(prepareMarkerImage(markerBitmap, markerColor.getColor())));
-            ;
+            markerOptions.title(item.getName());
+            markerOptions.snippet(Utils.getCourierState(item.getState()));
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(item.getColor()));
             super.onBeforeClusterItemRendered(item, markerOptions);
         }
     }
 
+/*
     private static Bitmap prepareMarkerImage(Bitmap myBitmap, int color) {
 
         int[] allPixels = new int[myBitmap.getHeight() * myBitmap.getWidth()];
@@ -239,6 +231,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         myBitmap.setPixels(allPixels, 0, myBitmap.getWidth(), 0, 0, myBitmap.getWidth(), myBitmap.getHeight());
         return myBitmap;
     }
+*/
 
     private void handleError(Throwable throwable) {
         throwable.printStackTrace();

@@ -6,4 +6,6 @@ interface IViewModel {
     void onResume();
 
     void onPause();
+
+    void handleError(Throwable throwable);
 }
