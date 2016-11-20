@@ -49,7 +49,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
     // Map & Location constants
     private static final int ZOOM_LEVEL = 14;
     private static final long LOCATION_INTERVAL = 1000;         // ms
-    private static final float LOCATION_DISPLACEMENT = 10;      // meters
+    private static final float LOCATION_DISPLACEMENT = 1;      // meters
     private static final long CLUSTER_RENDERING_INTERVAL = 1000;// ms
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
@@ -133,6 +133,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED)
             return mLocationProvider.getUpdatedLocation(locationRequest)
+                    .debounce(LOCATION_INTERVAL, TimeUnit.MILLISECONDS)
                     .subscribe(location -> mViewModel.storeMyLocation(location),
                             this::handleError);
         else
@@ -144,6 +145,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED)
             return mLocationProvider.getDetectedActivity((int) LOCATION_INTERVAL)
+                    .debounce(LOCATION_INTERVAL, TimeUnit.MILLISECONDS)
                     .map(a -> a.getMostProbableActivity().getType())
                     .subscribe(state -> mViewModel.storeMyState(state),
                             this::handleError);
@@ -175,7 +177,6 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
                 mMap.moveCamera(CameraUpdateFactory
                         .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), ZOOM_LEVEL));
                 mMap.setMyLocationEnabled(true);
-                mViewModel.storeMyLocation(location);
             }
         } else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);

@@ -25,7 +25,7 @@ public class DataModel implements IDataModel {
     public DataModel(Context context) {
         Random rand = new Random();
         // random color for Marker HUE model
-        float color = (float) rand.nextInt(360);
+        float color = (float) rand.nextInt(36) * 10;
         me = new Courier("", "", color, false, 0, 0, 4);
         mContext = context;
         if (isMyNameEmpty())

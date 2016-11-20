@@ -12,6 +12,7 @@ import info.duhovniy.courierapp.datamodel.IDataModel;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 public class MainViewModel implements IViewModel {
@@ -49,7 +50,7 @@ public class MainViewModel implements IViewModel {
                 .map(token -> FirebaseAuth.getInstance().getCurrentUser().getUid())
                 // TODO: test subscription on different thread
                 .subscribeOn(AndroidSchedulers.mainThread())
-                .observeOn(AndroidSchedulers.mainThread())
+                .observeOn(Schedulers.io())
                 .subscribe(id -> {
                     mDataModel.getMe().setId(id);
                     mDataModel.saveMeToCloud();

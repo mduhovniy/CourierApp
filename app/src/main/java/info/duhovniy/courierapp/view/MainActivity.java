@@ -92,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
                 .map(String::valueOf)
                 .filter(s -> (s.length() > 0))
                 .debounce(1000, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
+//                .observeOn(AndroidSchedulers.mainThread())
+                .observeOn(Schedulers.io())
                 .subscribe(s -> mViewModel.changeMyName(s),
                         this::handleError);
     }
@@ -100,7 +101,8 @@ public class MainActivity extends AppCompatActivity {
     private Subscription subscribeToOnSwitchChanges() {
         return RxCompoundButton.checkedChanges(binding.switchVisibility)
                 .debounce(500, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
+//                .observeOn(AndroidSchedulers.mainThread())
+                .observeOn(Schedulers.io())
                 .subscribe(b -> mViewModel.turnMeOn(b),
                         this::handleError);
     }
