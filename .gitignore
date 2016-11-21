@@ -7,3 +7,5 @@
 app/google-services.json
 libs/
 app/src/debug/res/values/google_maps_api.xml
+app/src/release/res/values/google_maps_api.xml
+/CourierBackend/src/main/webapp/WEB-INF/CourierApp-0569e878205c.json

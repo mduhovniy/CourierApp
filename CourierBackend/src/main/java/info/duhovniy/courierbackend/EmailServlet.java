@@ -30,14 +30,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 
-public class MyServlet extends HttpServlet {
-    private static Logger Log = Logger.getLogger("info.duhovniy.courierbackend.MyServlet");
+public class EmailServlet extends HttpServlet {
+    private static Logger Log = Logger.getLogger("info.duhovniy.courierbackend.EmailServlet");
 
     @Override
-    public void doGet(HttpServletRequest req, HttpServletResponse resp)
+    public void doGet(final HttpServletRequest req, final HttpServletResponse resp)
             throws IOException {
-        resp.setContentType("text/plain");
-        resp.getWriter().println("Please use the form to POST to this url");
+        resp.getWriter().println("This page you can not call directly!");
     }
 
     @Override
@@ -49,18 +48,8 @@ public class MyServlet extends HttpServlet {
             return;
         }
 
-        Log.info("Sending the couriers list email.");
+        resp.getWriter().println("Sending the couriers list email.");
 
-        String outString;
-        outString = "<p>Sending the couriers list email.</p><p><strong>Note:</strong> ";
-        outString = outString.concat("the servlet must be deployed to App Engine in order to ");
-        outString = outString.concat("send the email. Running the server locally writes a message ");
-        outString = outString.concat("to the log file instead of sending an email message.</p>");
-
-        resp.getWriter().println(outString);
-
-        // Note: Ensure that the [PRIVATE_KEY_FILENAME].json has read
-        // permissions set.
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setServiceAccount(getServletContext().getResourceAsStream("/WEB-INF/CourierApp-0569e878205c.json"))
                 .setDatabaseUrl("https://courierapp-59940.firebaseio.com/")
@@ -95,23 +84,13 @@ public class MyServlet extends HttpServlet {
                 String todoText = "Couriers List\n\n";
 
                 for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                    todoText = todoText + " * " + childSnapshot.getValue().toString() + "\n";
+                    todoText += " * " + childSnapshot.getValue().toString() + "\n";
                 }
-
-                // Now send the email
-
-                // Note: When an application running in the development server calls the Mail
-                // service to send an email message, the message is printed to the log.
-                // The Java development server does not send the email message.
-
-                // You can test the email without waiting for the cron job to run by
-                // loading http://[FIREBASE_PROJECT_ID].appspot.com/send-email in your browser.
 
                 Properties props = new Properties();
                 Session session = Session.getDefaultInstance(props, null);
                 try {
                     Message msg = new MimeMessage(session);
-                    //Make sure you substitute your project-id in the email From field
                     msg.setFrom(new InternetAddress("reminder@courierapp-59940.appspotmail.com",
                             "Couriers List"));
                     msg.addRecipient(Message.RecipientType.TO,
@@ -122,14 +101,11 @@ public class MyServlet extends HttpServlet {
                 } catch (MessagingException | UnsupportedEncodingException e) {
                     Log.warning(e.getMessage());
                 }
-
-                // Note: in a production application you should replace the hard-coded email address
-                // above with code that populates msg.addRecipient with the app user's email address.
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                System.out.println("Error: " + error);
+                System.out.println("Data Base Error: " + error);
             }
         });
     }

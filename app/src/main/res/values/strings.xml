@@ -1,6 +1,5 @@
 <resources>
-    <string name="app_name">CourierApp</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="app_name">Track Together</string>
     <string name="enter_your_name">enter your name...</string>
     <string name="switch_on">ON</string>
     <string name="GPS_check_response">Lets go to work?)</string>
