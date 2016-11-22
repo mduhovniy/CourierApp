@@ -65,20 +65,21 @@ public class ListServlet extends HttpServlet {
                 System.out.println("Error: " + error);
             }
         });
-
-
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setAttribute("list", repo.getAllCouriers());
-        try {
-            // start list rendering through JSP
-            getServletContext().getRequestDispatcher("/pages/courier-list.jsp").include(req, resp);
-        } catch (ServletException e) {
-            Log.info("Servlet exception");
-        } catch (IOException e) {
-            Log.info("IO exception");
-        }
+        if (!repo.isEmpty()) {
+            req.setAttribute("list", repo.getAllCouriers());
+            try {
+                // start list rendering through JSP
+                getServletContext().getRequestDispatcher("/pages/courier-list.jsp").include(req, resp);
+            } catch (ServletException e) {
+                Log.info("Servlet exception");
+            } catch (IOException e) {
+                Log.info("IO exception");
+            }
+        } else
+            resp.getWriter().println("List not ready yet! Please first do the Refresh");
     }
 }

@@ -45,4 +45,9 @@ class CourierRepo implements ICourierRepo {
     public void clear() {
         list.clear();
     }
+
+    @Override
+    public boolean isEmpty() {
+        return list.isEmpty();
+    }
 }

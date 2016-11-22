@@ -14,8 +14,8 @@
 		<th>Name</th>
 		<th>Is On</th>
 		<th>State</th>
-		<th>Lattitude</th>
-		<th>Longtitude</th>
+		<th>Latitude</th>
+		<th>Longitude</th>
 	</tr>
 
 	<c:forEach var="courier" items="${requestScope.list}">

@@ -16,4 +16,6 @@ public interface ICourierRepo {
     void deleteCourier(Courier courier);
 
     void clear();
+
+    boolean isEmpty();
 }
