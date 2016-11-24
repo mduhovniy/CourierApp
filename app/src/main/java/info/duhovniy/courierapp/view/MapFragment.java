@@ -103,6 +103,7 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
         mMap.setOnCameraIdleListener(mClusterManager);
         mMap.setOnMarkerClickListener(mClusterManager);
         mLocationProvider = new ReactiveLocationProvider(getContext());
+        mViewModel.onResume();
         mSubscription.add(subscribeToFirstLocation());
         mSubscription.add(subscribeToUpdateLocation());
         mSubscription.add(subscribeToUpdateAction());
@@ -134,8 +135,10 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
                 == PackageManager.PERMISSION_GRANTED)
             return mLocationProvider.getUpdatedLocation(locationRequest)
                     .debounce(LOCATION_INTERVAL, TimeUnit.MILLISECONDS)
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(Schedulers.io())
                     .subscribe(location -> mViewModel.storeMyLocation(location),
-                            this::handleError);
+                            mViewModel::handleError);
         else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
@@ -147,8 +150,10 @@ public class MapFragment extends SupportMapFragment implements OnMapReadyCallbac
             return mLocationProvider.getDetectedActivity((int) LOCATION_INTERVAL)
                     .debounce(LOCATION_INTERVAL, TimeUnit.MILLISECONDS)
                     .map(a -> a.getMostProbableActivity().getType())
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(Schedulers.io())
                     .subscribe(state -> mViewModel.storeMyState(state),
-                            this::handleError);
+                            mViewModel::handleError);
         else
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         return Observable.just(null).subscribe();
