@@ -39,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
         checkGPS();
 
         mapFragment = new MapFragment();
-        if (findViewById(R.id.map) != null)
-            getSupportFragmentManager().beginTransaction().replace(R.id.map, mapFragment, "MAP_FRAGMENT").commit();
+        if (binding.map != null)
+            getSupportFragmentManager().beginTransaction().replace(binding.map.getId(), mapFragment, "MAP_FRAGMENT").commit();
     }
 
     private void checkGPS() {
